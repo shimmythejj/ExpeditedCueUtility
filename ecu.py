@@ -18,6 +18,7 @@ import csv
 import os.path
 import subprocess
 import argparse
+import re
 
 # TODO write test code for this I guess???
 
@@ -28,17 +29,22 @@ def get_seconds(hms):
     """
 
     if type(hms) == str:
+
+        # this regex format is a bit more lenient than documentation states, but it shouldn't cause issues
+        str_format = re.compile('^([0-9]+:){0,2}([0-9]+)$')
+        validity = str_format.match(hms)
         split_string = hms.split(':')
-        if len(split_string) == 1:
+
+        if len(split_string) == 1 and validity:
             seconds = int(split_string[0])
-        elif len(split_string) == 2:
+        elif len(split_string) == 2 and validity:
             seconds = int(split_string[0]) * 60 + int(split_string[1])
-        elif len(split_string) == 3:
+        elif len(split_string) == 3 and validity:
             seconds = (int(split_string[0]) * 3600) + (int(split_string[1]) * 60) + int(split_string[2])
         else:
             raise ValueError('expected str in format HH:MM:SS, received: ' + hms)
     else:
-        raise TypeError('expected str, received: ' + type(hms))
+        raise TypeError('expected str, received: ' + str(type(hms)))
 
     return seconds
 
