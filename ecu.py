@@ -23,7 +23,9 @@ import argparse
 
 
 def get_seconds(hms):
-    """converts HH:MM:SS, MM:SS, and SS string to total seconds int"""
+    """
+    converts HH:MM:SS, MM:SS, and SS string to total seconds int
+    """
 
     if type(hms) == str:
         split_string = hms.split(':')
@@ -42,7 +44,13 @@ def get_seconds(hms):
 
 
 def get_hms(seconds):
-    """Converts an # of seconds to a HH:MM:SS format string"""
+    """
+    Converts an # of seconds to a HH:MM:SS format string
+    truncates the hours if less than 60 minutes, but always has minutes:seconds
+
+    argument seconds can be either an in or float
+    returns a string
+    """
 
     if type(seconds) == int or type(seconds) == float:
         seconds = int(round(seconds))
@@ -105,22 +113,22 @@ def generate(audio_file_path, tracklist_path=None, verbose=False):
     total_duration_seconds = total_duration_seconds.replace('\n', '')
     total_duration_seconds = float(total_duration_seconds)
 
-    data_list = []
+    tracklist_data = []
 
-    # loading initial csv into data_list
+    # loading initial csv into tracklist_data
     with open(tracklist_path, 'r') as f:
         reader = csv.reader(f)
         for row in reader:
             # csv file expects a HH:MM:SS style index for each track, converting it to raw seconds for easier processing
             row[3] = get_seconds(row[3])
-            data_list.append(row)
+            tracklist_data.append(row)
 
     # appending individual track length to the end of each row
-    for i, row in enumerate(data_list):
-        if i == len(data_list) - 1:
+    for i, row in enumerate(tracklist_data):
+        if i == len(tracklist_data) - 1:
             duration_seconds = total_duration_seconds - row[3]
         else:
-            duration_seconds = data_list[i + 1][3] - row[3]
+            duration_seconds = tracklist_data[i + 1][3] - row[3]
         row.append(duration_seconds)
 
     # TODO maybe move these information displays into their own function and make it optional
@@ -143,7 +151,7 @@ def generate(audio_file_path, tracklist_path=None, verbose=False):
           '{:>10}'.format('Length')[-10:])
     print('-' * 80)
     # data
-    for item in data_list:
+    for item in tracklist_data:
         print('{:>4}'.format(item[0]) + '  ' +
               '{:<30}'.format(item[1])[:24] + '  ' +
               '{:<30}'.format(item[2])[:24] + '  ' +
@@ -152,7 +160,7 @@ def generate(audio_file_path, tracklist_path=None, verbose=False):
 
     # adding total length sanity check remove eventually
     calculated_length_seconds = 0
-    for row in data_list:
+    for row in tracklist_data:
         calculated_length_seconds += row[4]
     print('{:>80}'.format(get_hms(calculated_length_seconds)))
     print('{:>80}'.format(get_hms(total_duration_seconds)))
@@ -188,7 +196,7 @@ def generate(audio_file_path, tracklist_path=None, verbose=False):
             f.write('PERFORMER "' + album_performer + '"\n')
             f.write('TITLE "' + album_title + '"\n')
             f.write('FILE "' + audio_file + '" ' + audio_file_extension.upper()[1:] + '\n')
-            for item in data_list:
+            for item in tracklist_data:
                 f.write('  TRACK ' + item[0] + ' AUDIO\n')
                 f.write('    TITLE "' + item[2] + '"\n')
                 f.write('    PERFORMER "' + item[1] + '"\n')
@@ -217,7 +225,7 @@ def generate(audio_file_path, tracklist_path=None, verbose=False):
             os.makedirs(split_output_directory)
 
         # splitting tracks and outputting to audio_file_directory/split directory
-        for row in data_list:
+        for row in tracklist_data:
 
             # preparing arguments
             # track filenames are '# - Artist - Track.extension'
