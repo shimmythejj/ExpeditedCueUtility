@@ -8,7 +8,8 @@ get_seconds(hms) converts a HH:MM:SS string to a seconds int
 
 get_hms(seconds) converts a number of seconds to an HH:MM:SS string
 
-generate() runs the bulk of the program, it expects a single argument of the audio file path.
+generate() runs the bulk of the program, it expects at least 1 argument of the path to audio file.
+tracklist_path and verbose are optional.
 
 external programs ffmpeg and ffprobe are prerequisites for this module to run
 """
@@ -75,12 +76,13 @@ def generate(audio_file_path, tracklist_path=None, verbose=False):
 
     tracklist.csv should be 4 rows per column in the format Track#,Artist,Track Title,Track Index in HH:MM:SS
     if no tracklist csv file is provided, then tracklist.csv is loaded from the same directory as the audio file
+
     the cue file is generated in the same directory as the audio file
     the split tracks are generated in a 'split/' subdirectory of the audio file
     """
     # TODO change the CSV format to start with Track# THEN Track Index followed by Artist,Track Title
     # TODO make some nicer error messages if referenced files don't exist
-    # TODO MAYBE choose custom outputs for cue and split tracks...
+    # TODO choose custom outputs for cue and split tracks...
 
     audio_file_directory = os.path.dirname(audio_file_path)
     audio_file = os.path.basename(audio_file_path)
@@ -179,8 +181,6 @@ def generate(audio_file_path, tracklist_path=None, verbose=False):
         create_cue = True
         album_performer = 'Various Artists'
 
-    # TODO do something about deciding a whole album performer/artist
-
     if create_cue:
         # outputting track section of .cue file
         cue_output_full_path = audio_file_directory + '/' + output_file
@@ -198,6 +198,7 @@ def generate(audio_file_path, tracklist_path=None, verbose=False):
         print('CUE File written')
         print('')
 
+    # same thing here, verbose gives option to split, it defaults to split without verbose
     if verbose:
         print('')
         user_decision = input('Split audio into individual tracks at ' + audio_file_path + '? [y/n]:')
@@ -215,7 +216,7 @@ def generate(audio_file_path, tracklist_path=None, verbose=False):
         if not os.path.exists(split_output_directory):
             os.makedirs(split_output_directory)
 
-        # splitting tracks and outputting to output directory
+        # splitting tracks and outputting to audio_file_directory/split directory
         for row in data_list:
 
             # preparing arguments
@@ -247,9 +248,4 @@ if __name__ == '__main__':
     parser.add_argument('-t', '--tracklist', type=str, help='path to tracklist csv file')
     parser.add_argument('-v', '--verbose', action='store_true', help='extra user prompts appear')
     pargs = parser.parse_args()
-    # print(pargs.audio)
-    # print(pargs.tracklist)
-    # print(pargs.cue)
-    # print(pargs.split)
-    # main_args = sys.argv
     generate(pargs.audio, tracklist_path=pargs.tracklist, verbose=pargs.verbose)
