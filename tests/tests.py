@@ -1,6 +1,8 @@
 import unittest
 import unittest.mock
 import ecu
+import os
+import shutil
 
 
 class TestGetSeconds(unittest.TestCase):
@@ -239,18 +241,74 @@ class TestEnterToContinue(unittest.TestCase):
 # @unittest.skip('I do not know how to do this one yet')
 class TestGenerate(unittest.TestCase):
 
-    def test_generate_verbose(self):
-        self.fail()
+    @unittest.mock.patch('ecu.yes_no_decision', return_value='y')
+    @unittest.mock.patch('ecu.get_user_input', return_value='y')
+    @unittest.mock.patch('ecu.enter_to_continue', return_value='y')
+    def test_generate_verbose(self, input1, input2, input3):
+        if os.path.exists('sample/audio/'):
+            shutil.rmtree('sample audio/split/')
+        if os.path.exists('sample audio/Theophany - Time\'s End 1 (Sample).cue'):
+            os.remove('sample audio/Theophany - Time\'s End 1 (Sample).cue')
+        ecu.generate('sample audio/Theophany - Time\'s End 1 (Sample).mp3', verbose=True)
+        track1_exists = os.path.exists('sample audio/split/1 - Theophany - Majora\'s Mask (Sample).mp3')
+        track2_exists = os.path.exists('sample audio/split/2 - Theophany - The Clockworks (Sample).mp3')
+        track3_exists = os.path.exists('sample audio/split/3 - Theophany ft. Laura Intravia - Terrible Fate (Sample).mp3')
+        cuefile_exists = os.path.exists('sample audio/Theophany - Time\'s End 1 (Sample).cue')
+        self.assertEqual(True, track1_exists)
+        self.assertEqual(True, track2_exists)
+        self.assertEqual(True, track3_exists)
+        self.assertEqual(True, cuefile_exists)
 
     @unittest.mock.patch('ecu.yes_no_decision', return_value='y')
     @unittest.mock.patch('ecu.get_user_input', return_value='y')
     @unittest.mock.patch('ecu.enter_to_continue', return_value='y')
     def test_generate_nonverbose(self, input1, input2, input3):
+        if os.path.exists('sample/audio/'):
+           shutil.rmtree('sample audio/split/')
+        if os.path.exists('sample audio/Theophany - Time\'s End 1 (Sample).cue'):
+            os.remove('sample audio/Theophany - Time\'s End 1 (Sample).cue')
         ecu.generate('sample audio/Theophany - Time\'s End 1 (Sample).mp3')
-        self.fail()
+        track1_exists = os.path.exists('sample audio/split/1 - Theophany - Majora\'s Mask (Sample).mp3')
+        track2_exists = os.path.exists('sample audio/split/2 - Theophany - The Clockworks (Sample).mp3')
+        track3_exists = os.path.exists('sample audio/split/3 - Theophany ft. Laura Intravia - Terrible Fate (Sample).mp3')
+        cuefile_exists = os.path.exists('sample audio/Theophany - Time\'s End 1 (Sample).cue')
+        self.assertEqual(True, track1_exists)
+        self.assertEqual(True, track2_exists)
+        self.assertEqual(True, track3_exists)
+        self.assertEqual(True, cuefile_exists)
 
-    def test_generate_custom_tracklist(self):
-        self.fail()
+    @unittest.mock.patch('ecu.yes_no_decision', return_value='y')
+    @unittest.mock.patch('ecu.get_user_input', return_value='y')
+    @unittest.mock.patch('ecu.enter_to_continue', return_value='y')
+    def test_generate_custom_tracklist(self, input1, input2, input3):
+        if os.path.exists('sample/audio/'):
+            shutil.rmtree('sample audio/split/')
+        if os.path.exists('sample audio/Theophany - Time\'s End 1 (Sample).cue'):
+            os.remove('sample audio/Theophany - Time\'s End 1 (Sample).cue')
+        ecu.generate('sample audio/Theophany - Time\'s End 1 (Sample).mp3', tracklist_path='sample audio/reference files/custom tracklist.csv')
+        track1_exists = os.path.exists('sample audio/split/1 - Theophany - Majora\'s Mask (Sample).mp3')
+        track2_exists = os.path.exists('sample audio/split/2 - Theophany - The Clockworks (Sample).mp3')
+        track3_exists = os.path.exists('sample audio/split/3 - Theophany ft. Laura Intravia - Terrible Fate (Sample).mp3')
+        cuefile_exists = os.path.exists('sample audio/Theophany - Time\'s End 1 (Sample).cue')
+        self.assertEqual(True, track1_exists)
+        self.assertEqual(True, track2_exists)
+        self.assertEqual(True, track3_exists)
+        self.assertEqual(True, cuefile_exists)
+
+
+class TestParseThemArgs(unittest.TestCase):
+
+    def test_parse_them_args(self):
+        received_pargs = str(ecu.parse_them_args(['sample audio/Theophany - Time\'s End 1 (Sample).mp3',
+                                                  '-t',
+                                                  'sample audio/reference files/custom tracklist.csv',
+                                                  '-v']))
+        expected_pargs = str('Namespace(audio="sample audio/Theophany - Time\'s End 1 (Sample).mp3", '
+                             'tracklist=\'sample audio/reference files/custom tracklist.csv\', '
+                             'verbose=True)')
+        print(expected_pargs)
+        print(received_pargs)
+        self.assertEqual(expected_pargs, received_pargs)
 
 
 def nifty_inputter(return_value):

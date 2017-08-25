@@ -311,10 +311,16 @@ def generate(audio_file_path, tracklist_path=None, verbose=False):
     enter_to_continue()
 
 
-if __name__ == '__main__':
+def parse_them_args(args):
     parser = argparse.ArgumentParser()
     parser.add_argument('audio', help='path to audio file to be processed')
     parser.add_argument('-t', '--tracklist', type=str, help='path to tracklist csv file')
     parser.add_argument('-v', '--verbose', action='store_true', help='extra user prompts appear')
-    pargs = parser.parse_args()
+    pargs = parser.parse_args(args)
+    return pargs
+
+
+if __name__ == '__main__':
+    print(sys.argv)
+    pargs = parse_them_args(sys.argv[1:])
     generate(pargs.audio, tracklist_path=pargs.tracklist, verbose=pargs.verbose)
