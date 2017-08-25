@@ -152,5 +152,30 @@ class TestGetHMS(unittest.TestCase):
         self.assertEqual(expected_message, exception_message)
 
 
+class TestProbeDuration(unittest.TestCase):
+
+    def test_sample_data(self):
+
+        sample_audio = 'sample audio/Theophany - Time\'s End 1 (Sample).mp3'
+        expected_duration = 93
+        calculated_duration = ecu.probe_duration(sample_audio)
+        rounded_duration = round(calculated_duration)
+        self.assertEqual(expected_duration, rounded_duration)
+
+
+class TestParseTracklistCsv(unittest.TestCase):
+
+    def test_sample_data(self):
+        sample_audio = 'sample audio/tracklist.csv'
+        duration = 93
+        returned_data = ecu.parse_tracklist_csv(sample_audio, duration)
+        print(returned_data)
+        expected_data = [['1', 'Theophany', 'Majora\'s Mask (Sample)', 0, 31],
+                         ['2', 'Theophany', 'The Clockworks (Sample)', 31, 31],
+                         ['3', 'Theophany ft. Laura Intravia', 'Terrible Fate (Sample)', 62, 31]]
+
+        self.assertEqual(expected_data, returned_data)
+
+
 if __name__ == '__main__':
     unittest.main()

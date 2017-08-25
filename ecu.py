@@ -22,9 +22,12 @@ import re
 
 
 class Album(object):
+    """Docstring"""
+    # TODO this docstring
 
     def __init__(self, audio_file_path, tracklist_path=None):
 
+        # TODO do I need validation? or will standard errors be good enough?
         self.audio_file_path = audio_file_path
         self.audio_file_directory = os.path.dirname(audio_file_path)
         self.audio_file_name = os.path.basename(audio_file_path)
@@ -112,6 +115,7 @@ def probe_duration(audio_file_path):
     return total_duration_seconds
 
 
+# TODO TESTS
 def parse_tracklist_csv(tracklist_path, total_duration_seconds):
     """
     This parses the tracklist csv
@@ -143,6 +147,7 @@ def parse_tracklist_csv(tracklist_path, total_duration_seconds):
 
 # TODO TESTS
 def review_album(working_album):
+    """Prints a readable chart of data of working_album Album, accepts a populated Album object"""
 
     # since there is no csv and file sanity checking yet, visual inspection is required
     print('')
@@ -173,18 +178,21 @@ def review_album(working_album):
         calculated_length_seconds += row[4]
     print('{:>80}'.format(get_hms(calculated_length_seconds)))
     print('{:>80}'.format(get_hms(working_album.total_duration_seconds)))
-    print('')
-    user_decision = input('Continue? [y/n]:')
-    if user_decision != 'y':
+    # print('')
+    # user_decision = input('Continue? [y/n]:')
+    if not yes_no_decision('Continue?'):
         print('')
         print('Exiting')
-        input("Press enter key to finish...")
         print('')
+        enter_to_continue()
         sys.exit(0)
 
 
 # TODO TESTS
 def write_cue(album, output_file):
+    """Docstring"""
+    # TODO this docstring
+
     # outputting track section of .cue file
     cue_output_full_path = album.audio_file_directory + '/' + output_file
     with open(cue_output_full_path, 'w') as f:
@@ -198,9 +206,16 @@ def write_cue(album, output_file):
             f.write('    PERFORMER "' + item[1] + '"\n')
             f.write('    INDEX 01 ' + get_hms(item[3]) + ':00\n')
 
+    print('')
+    print('CUE file written.')
+    print('')
+
 
 # TODO TESTS
 def split_tracks(working_album):
+    """Docstring"""
+    # TODO this docstring
+
     # create split output directory
     split_output_directory = working_album.audio_file_directory + '/split'
     if not os.path.exists(split_output_directory):
@@ -228,6 +243,33 @@ def split_tracks(working_album):
                 print(line, end='')
 
 
+def yes_no_decision(prompt_text, inputter=input):
+    """Asks user a question, returns answer as boolean, by default it uses input(), can be defined for unit testing"""
+
+    print('')
+    user_input = inputter('{} [y/n]:'.format(prompt_text))
+    print('')
+    if user_input:
+        if user_input[0].lower() == 'y':
+            return True
+        else:
+            return False
+    else:
+        return False
+
+
+def get_user_input(prompt_text, inputter=input):
+    return inputter(prompt_text)
+
+
+def enter_to_continue(inputter=input):
+    """Simple press enter to continue"""
+
+    print('')
+    inputter('Press enter to continue...')
+    print('')
+
+
 # TODO TESTS
 def generate(audio_file_path, tracklist_path=None, verbose=False):
     """
@@ -252,49 +294,21 @@ def generate(audio_file_path, tracklist_path=None, verbose=False):
 
     output_file = working_album.album_title + '.cue'
 
-    review_album(working_album)
-    # TODO create a user prompt method that works with unittests
-    # if verbose mode is off it will create a cue file by default
     if verbose:
-        print('')
-        user_decision = input('Create .cue file at ' + working_album.audio_file_path + '? [y/n]:')
-        print('')
-        if user_decision[0].lower() == 'y':
-            create_cue = True
-            working_album.album_performer = input('Album performer:')
-        else:
-            create_cue = False
-            working_album.album_performer = 'Various Artists'
-            # this wont actually do anything since the cue isn't be created
+        working_album.album_performer = get_user_input('Album performer:')
+        if yes_no_decision('Review album data?'):
+            review_album(working_album)
+        if yes_no_decision('Create .cue file?'):
+            write_cue(working_album, output_file)
+        if yes_no_decision('Split tracks?'):
+            split_tracks(working_album)
     else:
-        create_cue = True
-        working_album.album_performer = 'Various Artists'
-
-    if create_cue:
+        working_album.album_performer = "Various Artists"
+        review_album(working_album)
         write_cue(working_album, output_file)
-
-        print('')
-        print('CUE File written')
-        print('')
-
-    # same thing here, verbose gives option to split, it defaults to split without verbose
-    if verbose:
-        print('')
-        user_decision = input('Split audio into individual tracks at ' + working_album.audio_file_path + '? [y/n]:')
-        print('')
-        if user_decision[0].lower() == 'y':
-            do_split_tracks = True
-        else:
-            do_split_tracks = False
-    else:
-        do_split_tracks = True
-
-    if do_split_tracks:
         split_tracks(working_album)
 
-    print('')
-    input("Press enter key to finish...")
-    print('')
+    enter_to_continue()
 
 
 if __name__ == '__main__':
