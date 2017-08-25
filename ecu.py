@@ -36,6 +36,13 @@ class Album(object):
         self.total_duration_seconds = probe_duration(audio_file_path)
         self.album_performer = ''
 
+        # WAVE, MP3, and AIFF are the only "Supported" formats of cue files
+        # setting anything else to WAVE format may work with modern audio players
+        if self.audio_file_extension == '.mp3'.lower() or self.audio_file_extension == '.aiff'.lower():
+            self.cue_extension = self.audio_file_extension.upper()[1:]
+        else:
+            self.cue_extension = 'WAVE'
+
         # if no tracklist_path defined, load tracklist from same directory as audio file (audio_file_path)
         if tracklist_path is None:
             self.tracklist_path = self.audio_file_directory + '/' + 'tracklist.csv'
@@ -71,7 +78,7 @@ def get_seconds(hms):
     return seconds
 
 
-def get_hms(seconds):
+def get_hms(seconds, hours=True):
     """
     Converts an # of seconds to a HH:MM:SS format string
     truncates the hours if less than 60 minutes, but always has minutes:seconds
@@ -83,16 +90,26 @@ def get_hms(seconds):
     if type(seconds) == int or type(seconds) == float:
         seconds = int(round(seconds))
         m, s = divmod(seconds, 60)
-        h, m = divmod(m, 60)
 
-        if -1 < seconds < 3600:
-            # hms = "%d:%02d" % (m, s)  # old string formatting
-            hms = '{}:{:0>2d}'.format(m, s)
-        elif seconds > 3599:
-            # hms = "%d:%02d:%02d" % (h, m, s)  # old string formatting
-            hms = '{}:{:0>2d}:{:0>2d}'.format(h, m, s)
+        if hours:
+            h, m = divmod(m, 60)
+            if h < 1 and seconds >= 0:
+                print(h, m, s)
+                # hms = "%d:%02d" % (m, s)  # old string formatting
+                hms = '{}:{:0>2d}'.format(m, s)
+            elif h > 0:
+                # hms = "%d:%02d:%02d" % (h, m, s)  # old string formatting
+                hms = '{}:{:0>2d}:{:0>2d}'.format(h, m, s)
+            else:
+                raise ValueError('received a negative or invalid value for seconds')
+
+        # cue files don't use hours, only minutes, this format is needed for the cue writer
         else:
-            raise ValueError('received a negative or invalid value for seconds')
+            if -1 < seconds:
+                # hms = "%d:%02d" % (m, s)  # old string formatting
+                hms = '{}:{:0>2d}'.format(m, s)
+            else:
+                raise ValueError('received a negative or invalid value for seconds')
 
     else:
         raise TypeError('seconds must be type int or float, received: ' + str(type(seconds)))
@@ -153,7 +170,7 @@ def review_album(working_album):
     print('')
     print(working_album.audio_file_name)
     print('')
-    print(working_album.album_title + ' ' + working_album.audio_file_extension.upper()[1:])
+    print(working_album.album_title + ' ' + working_album.cue_extension)
     print('')
     print('Tracklist')
     print('')
@@ -199,12 +216,12 @@ def write_cue(album, output_file):
         f.write('PERFORMER "' + album.album_performer + '"\n')
         f.write('TITLE "' + album.album_title + '"\n')
         f.write('FILE "' + album.audio_file_name +
-                '" ' + album.audio_file_extension.upper()[1:] + '\n')
+                '" ' + album.cue_extension + '\n')
         for item in album.tracklist_data:
             f.write('  TRACK ' + item[0] + ' AUDIO\n')
             f.write('    TITLE "' + item[2] + '"\n')
             f.write('    PERFORMER "' + item[1] + '"\n')
-            f.write('    INDEX 01 ' + get_hms(item[3]) + ':00\n')
+            f.write('    INDEX 01 ' + get_hms(item[3], hours=False) + ':00\n')
 
     print('')
     print('CUE file written.')
