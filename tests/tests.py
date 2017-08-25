@@ -236,13 +236,17 @@ class TestEnterToContinue(unittest.TestCase):
         pass
 
 
-@unittest.skip('I do not know how to do this one yet')
+# @unittest.skip('I do not know how to do this one yet')
 class TestGenerate(unittest.TestCase):
 
     def test_generate_verbose(self):
         self.fail()
 
-    def test_generate_nonverbose(self):
+    @unittest.mock.patch('ecu.yes_no_decision', return_value='y')
+    @unittest.mock.patch('ecu.get_user_input', return_value='y')
+    @unittest.mock.patch('ecu.enter_to_continue', return_value='y')
+    def test_generate_nonverbose(self, input1, input2, input3):
+        ecu.generate('sample audio/Theophany - Time\'s End 1 (Sample).mp3')
         self.fail()
 
     def test_generate_custom_tracklist(self):
