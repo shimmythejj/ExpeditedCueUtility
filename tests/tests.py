@@ -191,11 +191,13 @@ class TestReviewAlbum(unittest.TestCase):
         ecu.review_album(test_album)
 
 
+@unittest.skip('already testing this code through the generate tests')
 class TestWriteCue(unittest.TestCase):
     def test_sample_data(self):
         self.fail()
 
 
+@unittest.skip('already testing this code through the generate tests')
 class TestSplitTracks(unittest.TestCase):
     def test_split_tracks(self):
         self.fail()
