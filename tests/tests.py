@@ -1,8 +1,10 @@
 import unittest
+import unittest.mock
 import ecu
 
 
 class TestGetSeconds(unittest.TestCase):
+
     def test_zero(self):
         result = ecu.get_seconds('0')
         expected = 0
@@ -91,6 +93,7 @@ class TestGetSeconds(unittest.TestCase):
 
 
 class TestGetHMS(unittest.TestCase):
+
     def test_zero(self):
         result = ecu.get_hms(0)
         expected = '0:00'
@@ -172,10 +175,18 @@ class TestParseTracklistCsv(unittest.TestCase):
         self.assertEqual(expected_data, returned_data)
 
 
-@unittest.skip('I do not know how to do this one yet')
+# @unittest.skip('I do not know how to do this one yet')
 class TestReviewAlbum(unittest.TestCase):
-    def test_sample_data(self):
-        self.fail()
+
+    @unittest.mock.patch('ecu.yes_no_decision', return_value='Y')
+    def test_review_album_continue(self, input):
+        test_album = ecu.Album('sample audio/Theophany - Time\'s End 1 (Sample).mp3', 'sample audio/tracklist.csv')
+        ecu.review_album(test_album)
+
+    @unittest.mock.patch('ecu.yes_no_decision', return_value='n')
+    def test_review_album_exit(self, input):
+        test_album = ecu.Album('sample audio/Theophany - Time\'s End 1 (Sample).mp3', 'sample audio/tracklist.csv')
+        ecu.review_album(test_album)
 
 
 class TestWriteCue(unittest.TestCase):
@@ -186,6 +197,43 @@ class TestWriteCue(unittest.TestCase):
 class TestSplitTracks(unittest.TestCase):
     def test_split_tracks(self):
         self.fail()
+
+
+class TestYesNoDecision(unittest.TestCase):
+
+    def test_yes_no_decision(self):
+
+        result = ecu.yes_no_decision('test prompt', inputter=nifty_inputter('y'))
+        self.assertEqual(True, result)
+
+        result = ecu.yes_no_decision('test prompt', inputter=nifty_inputter('Y'))
+        self.assertEqual(True, result)
+
+        result = ecu.yes_no_decision('test prompt', inputter=nifty_inputter('Yes'))
+        self.assertEqual(True, result)
+
+        result = ecu.yes_no_decision('test prompt', inputter=nifty_inputter('n'))
+        self.assertEqual(False, result)
+
+        result = ecu.yes_no_decision('test prompt', inputter=nifty_inputter(''))
+        self.assertEqual(False, result)
+
+        result = ecu.yes_no_decision('test prompt', inputter=nifty_inputter(False))
+        self.assertEqual(False, result)
+
+
+class TestGetUserInput(unittest.TestCase):
+
+    # @unittest.mock.patch('ecu.get_user_input', return_value='test')
+    def test_get_user_input(self):
+        self.assertEqual('test', ecu.get_user_input('test prompt', inputter=nifty_inputter('test')))
+
+
+class TestEnterToContinue(unittest.TestCase):
+
+    def test_enter_to_continue(self):
+        ecu.enter_to_continue(inputter=nifty_inputter(''))
+        pass
 
 
 @unittest.skip('I do not know how to do this one yet')
@@ -201,22 +249,16 @@ class TestGenerate(unittest.TestCase):
         self.fail()
 
 
-class TestYesNoDecision(unittest.TestCase):
+def nifty_inputter(return_value):
+    """
+    This function returns a function intending to replace the input() function for testing
+    The function returned will do nothing but return the return_value
+    """
 
-    def test_yes_no_decision(self):
-        self.fail()
+    def tester_inputter(prompt_text):
+        return return_value
 
-
-class TestGetUserInput(unittest.TestCase):
-
-    def test_get_user_input(self):
-        self.fail()
-
-
-class TestEnterToContinue(unittest.TestCase):
-
-    def test_enter_to_continue(self):
-        self.fail()
+    return tester_inputter
 
 
 if __name__ == '__main__':
