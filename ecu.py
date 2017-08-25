@@ -20,8 +20,6 @@ import subprocess
 import argparse
 import re
 
-# TODO write test code for this I guess???
-
 
 def get_seconds(hms):
     """
@@ -63,19 +61,22 @@ def get_hms(seconds):
         m, s = divmod(seconds, 60)
         h, m = divmod(m, 60)
 
-        if seconds < 3600:
-            hms = "%2d:%02d" % (m, s)
+        if -1 < seconds < 3600:
+            # hms = "%d:%02d" % (m, s)  # old string formatting
+            hms = '{}:{:0>2d}'.format(m, s)
         elif seconds > 3599:
-            hms = "%2d:%02d:%02d" % (h, m, s)
+            # hms = "%d:%02d:%02d" % (h, m, s)  # old string formatting
+            hms = '{}:{:0>2d}:{:0>2d}'.format(h, m, s)
         else:
             raise ValueError('received a negative or invalid value for seconds')
 
     else:
-        raise TypeError('seconds must be type int or float, received: ' + type(seconds))
+        raise TypeError('seconds must be type int or float, received: ' + str(type(seconds)))
 
     return hms
 
 
+# TODO tests for this
 def generate(audio_file_path, tracklist_path=None, verbose=False):
     """
     The generate function, generates a .cue file from a .csv and audio file.
