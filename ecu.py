@@ -21,6 +21,27 @@ import argparse
 import re
 
 
+class Album(object):
+
+    def __init__(self, audio_file_path, tracklist_path=None):
+
+        self.audio_file_path = audio_file_path
+        self.audio_file_directory = os.path.dirname(audio_file_path)
+        self.audio_file_name = os.path.basename(audio_file_path)
+        self.audio_file_extension = os.path.splitext(self.audio_file_name)[1]
+        self.album_title = os.path.splitext(self.audio_file_name)[0]
+        self.total_duration_seconds = probe_duration(audio_file_path)
+        self.album_performer = ''
+
+        # if no tracklist_path defined, load tracklist from same directory as audio file (audio_file_path)
+        if tracklist_path is None:
+            self.tracklist_path = self.audio_file_directory + '/' + 'tracklist.csv'
+        else:
+            self.tracklist_path = tracklist_path
+
+        self.tracklist_data = parse_tracklist_csv(self.tracklist_path, self.total_duration_seconds)
+
+
 def get_seconds(hms):
     """
     converts HH:MM:SS, MM:SS, and SS string to total seconds int
@@ -76,39 +97,8 @@ def get_hms(seconds):
     return hms
 
 
-# TODO tests for this
-def generate(audio_file_path, tracklist_path=None, verbose=False):
-    """
-    The generate function, generates a .cue file from a .csv and audio file.
-
-    audio_file_path should be a path to an audio file
-
-    tracklist_path should be a path to a valid .csv file
-
-    create_cue determines whether a .cue file is generated
-
-    split_tracks determines whether the original audio file is split into separate tracks
-
-    tracklist.csv should be 4 rows per column in the format Track#,Artist,Track Title,Track Index in HH:MM:SS
-    if no tracklist csv file is provided, then tracklist.csv is loaded from the same directory as the audio file
-
-    the cue file is generated in the same directory as the audio file
-    the split tracks are generated in a 'split/' subdirectory of the audio file
-    """
-    # TODO change the CSV format to start with Track# THEN Track Index followed by Artist,Track Title
-    # TODO make some nicer error messages if referenced files don't exist
-    # TODO choose custom outputs for cue and split tracks...
-
-    audio_file_directory = os.path.dirname(audio_file_path)
-    audio_file = os.path.basename(audio_file_path)
-    audio_file_extension = os.path.splitext(audio_file)[1]
-    album_title = os.path.splitext(audio_file)[0]
-
-    # if no tracklist_path defined, load tracklist from same directory as audio file (audio_file_path)
-    if tracklist_path is None:
-        tracklist_path = audio_file_directory + '/' + 'tracklist.csv'
-
-    output_file = album_title + '.cue'
+def probe_duration(audio_file_path):
+    """This uses ffprobe to find an audio file's length and returns seconds as a float"""
 
     # ffprobe utility can provide total duration of media file in seconds.
     ffprobe_cmd = 'ffprobe -i "' + audio_file_path + '" -show_entries format=duration -v quiet -of csv="p=0"'
@@ -119,6 +109,16 @@ def generate(audio_file_path, tracklist_path=None, verbose=False):
     total_duration_seconds = total_duration_seconds.replace('\r', '')
     total_duration_seconds = total_duration_seconds.replace('\n', '')
     total_duration_seconds = float(total_duration_seconds)
+    return total_duration_seconds
+
+
+def parse_tracklist_csv(tracklist_path, total_duration_seconds):
+    """
+    This parses the tracklist csv
+
+    tracklist.csv should be 4 rows per column in the format Track#,Artist,Track Title,Track Index in HH:MM:SS
+    if no tracklist csv file is provided, then tracklist.csv is loaded from the same directory as the audio file
+    """
 
     tracklist_data = []
 
@@ -138,18 +138,20 @@ def generate(audio_file_path, tracklist_path=None, verbose=False):
             duration_seconds = tracklist_data[i + 1][3] - row[3]
         row.append(duration_seconds)
 
-    # TODO maybe move these information displays into their own function and make it optional
+    return tracklist_data
+
+
+# TODO TESTS
+def review_album(working_album):
+
     # since there is no csv and file sanity checking yet, visual inspection is required
     print('')
-    print(audio_file)
+    print(working_album.audio_file_name)
     print('')
-    print(album_title + ' ' + audio_file_extension.upper()[1:])
+    print(working_album.album_title + ' ' + working_album.audio_file_extension.upper()[1:])
     print('')
     print('Tracklist')
     print('')
-
-    # this is a test
-
     # column headers
     print('{:>4}'.format('#') + '  ' +
           '{:<30}'.format('Track Artist')[:24] + '  ' +
@@ -158,7 +160,7 @@ def generate(audio_file_path, tracklist_path=None, verbose=False):
           '{:>10}'.format('Length')[-10:])
     print('-' * 80)
     # data
-    for item in tracklist_data:
+    for item in working_album.tracklist_data:
         print('{:>4}'.format(item[0]) + '  ' +
               '{:<30}'.format(item[1])[:24] + '  ' +
               '{:<30}'.format(item[2])[:24] + '  ' +
@@ -167,11 +169,10 @@ def generate(audio_file_path, tracklist_path=None, verbose=False):
 
     # adding total length sanity check remove eventually
     calculated_length_seconds = 0
-    for row in tracklist_data:
+    for row in working_album.tracklist_data:
         calculated_length_seconds += row[4]
     print('{:>80}'.format(get_hms(calculated_length_seconds)))
-    print('{:>80}'.format(get_hms(total_duration_seconds)))
-
+    print('{:>80}'.format(get_hms(working_album.total_duration_seconds)))
     print('')
     user_decision = input('Continue? [y/n]:')
     if user_decision != 'y':
@@ -181,33 +182,96 @@ def generate(audio_file_path, tracklist_path=None, verbose=False):
         print('')
         sys.exit(0)
 
+
+# TODO TESTS
+def write_cue(album, output_file):
+    # outputting track section of .cue file
+    cue_output_full_path = album.audio_file_directory + '/' + output_file
+    with open(cue_output_full_path, 'w') as f:
+        f.write('PERFORMER "' + album.album_performer + '"\n')
+        f.write('TITLE "' + album.album_title + '"\n')
+        f.write('FILE "' + album.audio_file_name +
+                '" ' + album.audio_file_extension.upper()[1:] + '\n')
+        for item in album.tracklist_data:
+            f.write('  TRACK ' + item[0] + ' AUDIO\n')
+            f.write('    TITLE "' + item[2] + '"\n')
+            f.write('    PERFORMER "' + item[1] + '"\n')
+            f.write('    INDEX 01 ' + get_hms(item[3]) + ':00\n')
+
+
+# TODO TESTS
+def split_tracks(working_album):
+    # create split output directory
+    split_output_directory = working_album.audio_file_directory + '/split'
+    if not os.path.exists(split_output_directory):
+        os.makedirs(split_output_directory)
+
+    # splitting tracks and outputting to audio_file_directory/split directory
+    for row in working_album.tracklist_data:
+
+        # preparing arguments
+        # track filenames are '# - Artist - Track.extension'
+        track_filename = row[0] + ' - ' + row[1] + ' - ' + row[2] + working_album.audio_file_extension
+        track_output_full_path = split_output_directory + '/' + track_filename
+
+        # preparing track index and length respectively
+        track_index = str(row[3])
+        track_length = str(row[4])
+
+        # ffmpeg command for splitting audio files into the same format
+        cmd = ['ffmpeg', '-i', working_album.audio_file_path, '-ss', track_index,
+               '-t', track_length, '-c:a', 'copy', '-y', track_output_full_path]
+
+        # TODO figure a way to error out the program if any of these ffmpeg instances error
+        with subprocess.Popen(cmd, stdout=subprocess.PIPE, bufsize=1, universal_newlines=True) as p:
+            for line in p.stdout:
+                print(line, end='')
+
+
+# TODO TESTS
+def generate(audio_file_path, tracklist_path=None, verbose=False):
+    """
+    The generate function, generates a .cue file from a .csv and audio file.
+
+    audio_file_path should be a path to an audio file
+
+    tracklist_path should be a path to a valid .csv file
+
+    create_cue determines whether a .cue file is generated
+
+    do_split_tracks determines whether the original audio file is split into separate tracks
+
+    the cue file is generated in the same directory as the audio file
+    the split tracks are generated in a 'split/' subdirectory of the audio file
+    """
+    # TODO change the CSV format to start with Track# THEN Track Index followed by Artist,Track Title
+    # TODO make some nicer error messages if referenced files don't exist
+    # TODO choose custom outputs for cue and split tracks...
+
+    working_album = Album(audio_file_path, tracklist_path)
+
+    output_file = working_album.album_title + '.cue'
+
+    review_album(working_album)
+    # TODO create a user prompt method that works with unittests
     # if verbose mode is off it will create a cue file by default
     if verbose:
         print('')
-        user_decision = input('Create .cue file at ' + audio_file_path + '? [y/n]:')
+        user_decision = input('Create .cue file at ' + working_album.audio_file_path + '? [y/n]:')
         print('')
         if user_decision[0].lower() == 'y':
             create_cue = True
-            album_performer = input('Album performer:')
+            working_album.album_performer = input('Album performer:')
         else:
             create_cue = False
-            album_performer = 'Various Artists'  # this wont actually do anything since the cue isn't be created
+            working_album.album_performer = 'Various Artists'
+            # this wont actually do anything since the cue isn't be created
     else:
         create_cue = True
-        album_performer = 'Various Artists'
+        working_album.album_performer = 'Various Artists'
 
     if create_cue:
-        # outputting track section of .cue file
-        cue_output_full_path = audio_file_directory + '/' + output_file
-        with open(cue_output_full_path, 'w') as f:
-            f.write('PERFORMER "' + album_performer + '"\n')
-            f.write('TITLE "' + album_title + '"\n')
-            f.write('FILE "' + audio_file + '" ' + audio_file_extension.upper()[1:] + '\n')
-            for item in tracklist_data:
-                f.write('  TRACK ' + item[0] + ' AUDIO\n')
-                f.write('    TITLE "' + item[2] + '"\n')
-                f.write('    PERFORMER "' + item[1] + '"\n')
-                f.write('    INDEX 01 ' + get_hms(item[3]) + ':00\n')
+        write_cue(working_album, output_file)
 
         print('')
         print('CUE File written')
@@ -216,41 +280,17 @@ def generate(audio_file_path, tracklist_path=None, verbose=False):
     # same thing here, verbose gives option to split, it defaults to split without verbose
     if verbose:
         print('')
-        user_decision = input('Split audio into individual tracks at ' + audio_file_path + '? [y/n]:')
+        user_decision = input('Split audio into individual tracks at ' + working_album.audio_file_path + '? [y/n]:')
         print('')
         if user_decision[0].lower() == 'y':
-            split_tracks = True
+            do_split_tracks = True
         else:
-            split_tracks = False
+            do_split_tracks = False
     else:
-        split_tracks = True
+        do_split_tracks = True
 
-    if split_tracks:
-        # create split output directory
-        split_output_directory = audio_file_directory + '/split'
-        if not os.path.exists(split_output_directory):
-            os.makedirs(split_output_directory)
-
-        # splitting tracks and outputting to audio_file_directory/split directory
-        for row in tracklist_data:
-
-            # preparing arguments
-            # track filenames are '# - Artist - Track.extension'
-            track_filename = row[0] + ' - ' + row[1] + ' - ' + row[2] + audio_file_extension
-            track_output_full_path = split_output_directory + '/' + track_filename
-
-            # preparing track index and length respectively
-            track_index = str(row[3])
-            track_length = str(row[4])
-
-            # ffmpeg command for splitting audio files into the same format
-            cmd = ['ffmpeg', '-i', audio_file_path, '-ss', track_index,
-                   '-t', track_length, '-c:a', 'copy', '-y', track_output_full_path]
-
-            # TODO figure a way to error out the program if any of these ffmpeg instances error
-            with subprocess.Popen(cmd, stdout=subprocess.PIPE, bufsize=1, universal_newlines=True) as p:
-                for line in p.stdout:
-                    print(line, end='')
+    if do_split_tracks:
+        split_tracks(working_album)
 
     print('')
     input("Press enter key to finish...")
