@@ -94,7 +94,6 @@ def get_hms(seconds, hours=True):
         if hours:
             h, m = divmod(m, 60)
             if h < 1 and seconds >= 0:
-                print(h, m, s)
                 # hms = "%d:%02d" % (m, s)  # old string formatting
                 hms = '{}:{:0>2d}'.format(m, s)
             elif h > 0:
