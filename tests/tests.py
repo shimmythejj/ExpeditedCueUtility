@@ -21,7 +21,7 @@ class TestGetSeconds(unittest.TestCase):
     def test_one_minute(self):
         result = ecu.get_seconds('1:00')
         expected = 60
-        self.assertEqual(result,expected)
+        self.assertEqual(result, expected)
 
     def test_one_minute_one(self):
         result = ecu.get_seconds('1:01')
@@ -91,7 +91,6 @@ class TestGetSeconds(unittest.TestCase):
 
 
 class TestGetHMS(unittest.TestCase):
-
     def test_zero(self):
         result = ecu.get_hms(0)
         expected = '0:00'
@@ -153,9 +152,7 @@ class TestGetHMS(unittest.TestCase):
 
 
 class TestProbeDuration(unittest.TestCase):
-
     def test_sample_data(self):
-
         sample_audio = 'sample audio/Theophany - Time\'s End 1 (Sample).mp3'
         expected_duration = 93
         calculated_duration = ecu.probe_duration(sample_audio)
@@ -164,12 +161,10 @@ class TestProbeDuration(unittest.TestCase):
 
 
 class TestParseTracklistCsv(unittest.TestCase):
-
     def test_sample_data(self):
         sample_audio = 'sample audio/tracklist.csv'
         duration = 93
         returned_data = ecu.parse_tracklist_csv(sample_audio, duration)
-        print(returned_data)
         expected_data = [['1', 'Theophany', 'Majora\'s Mask (Sample)', 0, 31],
                          ['2', 'Theophany', 'The Clockworks (Sample)', 31, 31],
                          ['3', 'Theophany ft. Laura Intravia', 'Terrible Fate (Sample)', 62, 31]]
@@ -177,5 +172,53 @@ class TestParseTracklistCsv(unittest.TestCase):
         self.assertEqual(expected_data, returned_data)
 
 
+@unittest.skip('I do not know how to do this one yet')
+class TestReviewAlbum(unittest.TestCase):
+    def test_sample_data(self):
+        self.fail()
+
+
+class TestWriteCue(unittest.TestCase):
+    def test_sample_data(self):
+        self.fail()
+
+
+class TestSplitTracks(unittest.TestCase):
+    def test_split_tracks(self):
+        self.fail()
+
+
+@unittest.skip('I do not know how to do this one yet')
+class TestGenerate(unittest.TestCase):
+
+    def test_generate_verbose(self):
+        self.fail()
+
+    def test_generate_nonverbose(self):
+        self.fail()
+
+    def test_generate_custom_tracklist(self):
+        self.fail()
+
+
+class TestYesNoDecision(unittest.TestCase):
+
+    def test_yes_no_decision(self):
+        self.fail()
+
+
+class TestGetUserInput(unittest.TestCase):
+
+    def test_get_user_input(self):
+        self.fail()
+
+
+class TestEnterToContinue(unittest.TestCase):
+
+    def test_enter_to_continue(self):
+        self.fail()
+
+
 if __name__ == '__main__':
     unittest.main()
+
