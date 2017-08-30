@@ -240,7 +240,7 @@ def split_tracks(working_album):
     # splitting tracks and outputting to audio_file_directory/split directory
     for row in working_album.tracklist_data:
 
-        # preparing arguments
+        # preparing ffmpeg arguments
         # track filenames are '# - Artist - Track.extension'
         track_filename = row[0] + ' - ' + row[1] + ' - ' + row[2] + working_album.audio_file_extension
         track_output_full_path = split_output_directory + '/' + track_filename
@@ -275,6 +275,8 @@ def yes_no_decision(prompt_text, inputter=input):
 
 
 def get_user_input(prompt_text, inputter=input):
+    """separate input function to help with testing"""
+
     return inputter(prompt_text)
 
 
@@ -328,6 +330,8 @@ def generate(audio_file_path, tracklist_path=None, verbose=False):
 
 
 def parse_them_args(args):
+    """Separate function to test argparse configuration"""
+
     parser = argparse.ArgumentParser()
     parser.add_argument('audio', help='path to audio file to be processed')
     parser.add_argument('-t', '--tracklist', type=str, help='path to tracklist csv file')
@@ -337,6 +341,6 @@ def parse_them_args(args):
 
 
 if __name__ == '__main__':
-    print(sys.argv)
-    pargs = parse_them_args(sys.argv[1:])
-    generate(pargs.audio, tracklist_path=pargs.tracklist, verbose=pargs.verbose)
+    # print(sys.argv)
+    parsed_args = parse_them_args(sys.argv[1:])
+    generate(parsed_args.audio, tracklist_path=parsed_args.tracklist, verbose=parsed_args.verbose)
