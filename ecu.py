@@ -22,8 +22,11 @@ import re
 
 
 class Album(object):
-    """Docstring"""
-    # TODO this docstring
+    """
+    This class contains the tracklist and other album information relevant to building cue files and splitting
+    the __init__ constructor requires a string containing the path to the audio file, the tracklist path is optional
+    if no tracklist path is provided, it will be assumed that tracklist.csv exists in the same director as the audio
+    """
 
     def __init__(self, audio_file_path, tracklist_path=None):
 
@@ -131,7 +134,6 @@ def probe_duration(audio_file_path):
     return total_duration_seconds
 
 
-# TODO TESTS
 def parse_tracklist_csv(tracklist_path, total_duration_seconds):
     """
     This parses the tracklist csv
@@ -161,7 +163,7 @@ def parse_tracklist_csv(tracklist_path, total_duration_seconds):
     return tracklist_data
 
 
-# TODO TESTS
+# TODO Write tests that actually test the output, only checking for errors right now
 def review_album(working_album):
     """Prints a readable chart of data of working_album Album, accepts a populated Album object"""
 
@@ -206,8 +208,7 @@ def review_album(working_album):
 
 # TODO TESTS
 def write_cue(album, output_file):
-    """Docstring"""
-    # TODO this docstring
+    """Generates a cue file from populated Album object and target output file"""
 
     # outputting track section of .cue file
     cue_output_full_path = album.audio_file_directory + '/' + output_file
@@ -229,8 +230,7 @@ def write_cue(album, output_file):
 
 # TODO TESTS
 def split_tracks(working_album):
-    """Docstring"""
-    # TODO this docstring
+    """Splits an audio file in to separate track audio files from a populated Album object"""
 
     # create split output directory
     split_output_directory = working_album.audio_file_directory + '/split'
